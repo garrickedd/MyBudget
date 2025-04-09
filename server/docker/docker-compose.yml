@@ -1,0 +1,26 @@
+services:
+  ####################### POSTGRES #######################
+  postgres:
+    image: postgres:alpine
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=mybudgetdb
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - '5432:5432'
+    networks:
+      - webapi_network
+    restart: unless-stopped
+    # env_files:
+    #   - ./app.env
+
+####################### VOLUME AND NETWORKS #######################
+volumes:
+  postgres:
+
+networks:
+  webapi_network:
+    driver: bridge
