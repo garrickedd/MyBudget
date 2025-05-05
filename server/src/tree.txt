@@ -1,0 +1,33 @@
+.
+├── api
+│   ├── handler
+│   │   └── user_handler.go
+│   └── router
+│       ├── router.go
+│       └── user_route.go
+├── application
+│   └── usecase
+│       └── user_usecase.go
+├── cmd
+│   └── main.go
+├── domain
+│   ├── model
+│   │   └── user.go
+│   └── repository
+│       └── user_repo.go
+├── go.mod
+├── go.sum
+├── infrastructure
+│   ├── database
+│   │   └── postgres.go
+│   ├── migrations
+│   │   ├── 000001_users.down.sql
+│   │   └── 000001_users.up.sql
+│   ├── persistence
+│   │   └── user_repository.go
+│   └── service
+│       └── bcrypt.go
+├── Makefile
+└── tree.txt
+
+15 directories, 16 files

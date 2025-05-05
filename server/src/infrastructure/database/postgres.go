@@ -24,5 +24,6 @@ func Postgres() (*sqlx.DB, error) {
 
 	config := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", host, user, pass, dbName, port)
 
+	println("Connected")
 	return sqlx.Connect("postgres", config)
 }

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:my_budget/features/auth/presentation/view/login_page.dart';
+import 'package:my_budget/features/auth/presentation/view/register_page.dart';
+import 'package:my_budget/features/onboarding/presentation/view/onboarding_page.dart';
 // import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:my_budget/features/auth/presentation/view/auth/login_page.dart';
-import 'package:my_budget/features/auth/presentation/view/auth/register_page.dart';
-import 'package:my_budget/features/auth/presentation/view/onboarding/onboarding_page.dart';
+
 import 'core/services/auth_service.dart';
 import 'injection_container.dart' as di;
 
