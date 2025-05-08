@@ -2,24 +2,22 @@ package main
 
 import (
 	"log"
-	"mybudget/api/handler"
 	"mybudget/api/router"
-	"mybudget/application/usecase"
 	"mybudget/infrastructure/database"
-	"mybudget/infrastructure/persistence"
 )
 
 func main() {
+	// Connect to database
 	db, err := database.Postgres()
 	if err != nil {
 		log.Fatal("Database connection failed:", err)
 	}
+	defer db.Close()
 
-	userRepo := &persistence.UserRepository{DB: db}
-	userUsecase := usecase.NewUserUsecase(userRepo)
-	userHandler := handler.NewUserHandler(userUsecase)
+	// Initialize router with all handlers
+	r := router.SetupRouter(db.DB) // Pass embedded sql.DB; update to db if repositories use sqlx.DB
 
-	r := router.SetupRouter(userHandler)
+	// Start server
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal("Server failed:", err)
 	}

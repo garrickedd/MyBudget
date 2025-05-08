@@ -1,48 +1,95 @@
 package usecase
 
 import (
-	"errors"
+	"fmt"
 	"mybudget/domain/model"
 	"mybudget/domain/repository"
+	"mybudget/infrastructure/service"
+	"time"
+
+	"github.com/google/uuid"
 )
 
-type UserUsecaseIF interface {
-	Register(user *model.User) error
+type UserUsecase interface {
+	Register(firstName, lastName, email, password string) (*model.User, error)
 	Login(email, password string) (*model.User, error)
 	GetByID(id string) (*model.User, error)
 }
 
-type UserUsecase struct {
-	userRepo repository.UserRepoIF
+type UserUsecaseImpl struct {
+	userRepo        repository.UserRepository
+	passwordService service.PasswordService
 }
 
-func NewUserUsecase(repo repository.UserRepoIF) *UserUsecase {
-	return &UserUsecase{userRepo: repo}
+func NewUserUsecase(userRepo repository.UserRepository, passwordService service.PasswordService) *UserUsecaseImpl {
+	return &UserUsecaseImpl{userRepo: userRepo, passwordService: passwordService}
 }
 
-func (u *UserUsecase) Register(user *model.User) error {
-	exists, err := u.userRepo.ExistsByEmail(user.Email)
+func (u *UserUsecaseImpl) Register(firstName, lastName, email, password string) (*model.User, error) {
+	// Check if email already exists
+	existingUser, err := u.userRepo.FindByEmail(email)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if exists {
-		return errors.New("email already registered")
+	if existingUser != nil {
+		return nil, fmt.Errorf("email already exists")
 	}
-	return u.userRepo.CreateUser(user)
-}
 
-func (u *UserUsecase) Login(email, password string) (*model.User, error) {
-	user, err := u.userRepo.GetByEmail(email)
+	// Hash password
+	hashedPassword, err := u.passwordService.HashPassword(password)
 	if err != nil {
-		return nil, errors.New("invalid credentials")
+		return nil, err
 	}
-	if user.Pass != password {
-		return nil, errors.New("invalid password")
+
+	// Create user
+	user := &model.User{
+		FirstName: firstName,
+		LastName:  lastName,
+		Email:     email,
+		Pass:      hashedPassword,
+		Name:      firstName + " " + lastName,
+		CreatedAt: time.Now(),
 	}
+
+	if err := u.userRepo.Create(user); err != nil {
+		return nil, err
+	}
+
+	// Create default jars
+	if err := u.userRepo.CreateDefaultJars(user.ID); err != nil {
+		return nil, err
+	}
+
 	return user, nil
 }
 
-func (u *UserUsecase) GetByID(id string) (*model.User, error) {
-	// Gợi ý: thêm method GetByID vào repo nếu bạn muốn thực hiện truy vấn theo id
-	return nil, errors.New("not implemented")
+func (u *UserUsecaseImpl) Login(email, password string) (*model.User, error) {
+	user, err := u.userRepo.FindByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, fmt.Errorf("invalid email or password")
+	}
+
+	if err := u.passwordService.ComparePassword(user.Pass, password); err != nil {
+		return nil, fmt.Errorf("invalid email or password")
+	}
+
+	return user, nil
+}
+
+func (u *UserUsecaseImpl) GetByID(id string) (*model.User, error) {
+	userID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user ID")
+	}
+	user, err := u.userRepo.FindByID(userID)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, fmt.Errorf("user not found")
+	}
+	return user, nil
 }
