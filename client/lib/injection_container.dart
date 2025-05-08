@@ -1,51 +1,60 @@
+import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
-import 'package:http/http.dart' as http;
-import 'package:my_budget/core/services/auth_service.dart';
-import 'package:my_budget/features/auth/data/datasources/auth_remote_datasource.dart';
-import 'package:my_budget/features/auth/data/repositories/auth_repository_impl.dart';
-import 'package:my_budget/features/auth/domain/repositories/auth_repository.dart';
-import 'package:my_budget/features/auth/domain/usecases/login.dart';
-import 'package:my_budget/features/auth/domain/usecases/register.dart';
-import 'package:my_budget/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:my_budget/features/onboarding/data/datasources/onboarding_local_datasource.dart';
-import 'package:my_budget/features/onboarding/data/repositories/onboarding_repository_impl.dart';
-import 'package:my_budget/features/onboarding/domain/repositories/onboarding_repository.dart';
-import 'package:my_budget/features/onboarding/domain/usecases/get_onboarding_content.dart';
-import 'package:my_budget/features/onboarding/presentation/bloc/onboarding_bloc.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:my_budget/features/finance/data/datasources/finance_remote_datasource.dart';
+import 'package:my_budget/features/finance/data/repositories/finance_repository_impl.dart';
+import 'package:my_budget/features/finance/domain/repositories/finance_repository.dart';
+import 'package:my_budget/features/finance/domain/usecases/create_budget.dart';
+import 'package:my_budget/features/finance/domain/usecases/generate_report.dart';
+import 'package:my_budget/features/finance/domain/usecases/get_budgets.dart';
+import 'package:my_budget/features/finance/domain/usecases/get_jars.dart';
+import 'package:my_budget/features/finance/domain/usecases/get_transactions.dart';
+import 'package:my_budget/features/finance/domain/usecases/record_expense.dart';
+import 'package:my_budget/features/finance/domain/usecases/record_income.dart';
+import 'package:my_budget/features/finance/presentation/bloc/finance_bloc.dart';
 
 final sl = GetIt.instance;
 
 Future<void> init() async {
   // External
-  sl.registerLazySingleton(() => http.Client());
-  sl.registerSingletonAsync<SharedPreferences>(
-    () async => await SharedPreferences.getInstance(),
+  sl.registerLazySingleton<Dio>(
+    () => Dio(
+      BaseOptions(
+        baseUrl: 'http://localhost:8080', // Adjust to your backend URL
+        connectTimeout: const Duration(seconds: 5),
+        receiveTimeout: const Duration(seconds: 3),
+      ),
+    ),
   );
-
-  // Services
-  sl.registerLazySingleton<AuthService>(() => AuthService());
-
-  // Bloc
-  sl.registerFactory(() => OnboardingBloc(sl(), sl()));
-  sl.registerFactory(() => AuthBloc(sl(), sl(), sl()));
-
-  // Use cases
-  sl.registerLazySingleton(() => GetOnboardingContent(sl()));
-  sl.registerLazySingleton(() => Login(sl()));
-  sl.registerLazySingleton(() => Register(sl()));
-
-  // Repository
-  sl.registerLazySingleton<OnboardingRepository>(
-    () => OnboardingRepositoryImpl(sl()),
-  );
-  sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
 
   // Data sources
-  sl.registerLazySingleton<OnboardingLocalDataSource>(
-    () => OnboardingLocalDataSourceImpl(),
+  sl.registerLazySingleton<FinanceRemoteDataSource>(
+    () => FinanceRemoteDataSourceImpl(sl<Dio>()),
   );
-  sl.registerLazySingleton<AuthRemoteDatasource>(
-    () => AuthRemoteDataSourceImpl(sl()),
+
+  // Repositories
+  sl.registerLazySingleton<FinanceRepository>(
+    () => FinanceRepositoryImpl(sl<FinanceRemoteDataSource>()),
+  );
+
+  // Use cases
+  sl.registerLazySingleton(() => GetJars(sl<FinanceRepository>()));
+  sl.registerLazySingleton(() => RecordIncome(sl<FinanceRepository>()));
+  sl.registerLazySingleton(() => RecordExpense(sl<FinanceRepository>()));
+  sl.registerLazySingleton(() => GetTransactions(sl<FinanceRepository>()));
+  sl.registerLazySingleton(() => CreateBudget(sl<FinanceRepository>()));
+  sl.registerLazySingleton(() => GetBudgets(sl<FinanceRepository>()));
+  sl.registerLazySingleton(() => GenerateReport(sl<FinanceRepository>()));
+
+  // BLoC
+  sl.registerFactory<FinanceBloc>(
+    () => FinanceBloc(
+      sl<GetJars>(),
+      sl<RecordIncome>(),
+      sl<RecordExpense>(),
+      sl<GetTransactions>(),
+      sl<CreateBudget>(),
+      sl<GetBudgets>(),
+      sl<GenerateReport>(),
+    ),
   );
 }
