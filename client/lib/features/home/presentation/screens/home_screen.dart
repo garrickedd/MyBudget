@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mybudget/features/about/presentation/screens/about_tab.dart';
+// import 'package:mybudget/features/about/presentation/screens/about_tab.dart';
+import 'package:mybudget/features/history/presentation/screens/history_tab.dart';
 import 'package:persistent_bottom_nav_bar_v2/persistent_bottom_nav_bar_v2.dart';
 import 'package:mybudget/features/home/presentation/screens/home_tab.dart';
 import 'package:mybudget/features/profile/presentation/screens/profile_tab.dart';
@@ -21,9 +22,9 @@ class HomeScreen extends StatelessWidget {
       ),
     ),
     PersistentTabConfig(
-      screen: const AboutTab(),
+      screen: const HistoryTab(),
       item: ItemConfig(
-        icon: const Icon(Icons.info),
+        icon: const Icon(Icons.history),
         // title: "About",
         activeForegroundColor: Colors.blue,
         inactiveForegroundColor: Colors.grey,

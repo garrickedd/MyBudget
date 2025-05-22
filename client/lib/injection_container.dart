@@ -27,6 +27,7 @@ import 'package:mybudget/features/transactions/data/datasources/transaction_remo
 import 'package:mybudget/features/transactions/data/repositories/transaction_repository_impl.dart';
 import 'package:mybudget/features/transactions/domain/repositories/transaction_repository.dart';
 import 'package:mybudget/features/transactions/domain/usecases/create_transaction.dart';
+import 'package:mybudget/features/transactions/domain/usecases/get_user_transactions.dart';
 import 'package:mybudget/features/transactions/presentation/providers/transaction_provider.dart';
 
 part 'injection_container.main.dart';

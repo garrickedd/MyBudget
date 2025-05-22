@@ -20,12 +20,36 @@ class TransactionRemoteDataSource {
               ? '/transactions/income'
               : '/transactions/expense';
       if (transaction.type == 'income') {
-        // Income không cần jar_id
         data.remove('jar_id');
       }
       await _apiClient.post(endpoint, data);
     } catch (e) {
       throw Exception('Failed to create transaction: $e');
+    }
+  }
+
+  Future<List<Transaction>> getUserTransactions(String userId) async {
+    try {
+      final response = await _apiClient.get('/transactions?user_id=$userId');
+      if (response is! List) {
+        throw Exception('Invalid response format: Expected a List');
+      }
+      return response
+          .map(
+            (json) => Transaction(
+              userId: json['user_id']?.toString() ?? '',
+              jarId: json['jar_id'] ?? 0,
+              type: json['type'] ?? '',
+              amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
+              description: json['description'] ?? '',
+              transactionDate: DateTime.parse(
+                json['transaction_date'] ?? DateTime.now().toIso8601String(),
+              ),
+            ),
+          )
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch transactions: $e');
     }
   }
 }

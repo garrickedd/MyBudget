@@ -79,16 +79,22 @@ Future<void> initDependencies() async {
   );
 
   // Transactions feature
-  getIt.registerLazySingleton<TransactionRemoteDataSource>(
-    () => TransactionRemoteDataSource(getIt<ApiClient>()),
+  getIt.registerSingleton<TransactionRemoteDataSource>(
+    TransactionRemoteDataSource(getIt<ApiClient>()),
   );
-  getIt.registerLazySingleton<TransactionRepository>(
-    () => TransactionRepositoryImpl(getIt<TransactionRemoteDataSource>()),
+  getIt.registerSingleton<TransactionRepository>(
+    TransactionRepositoryImpl(getIt<TransactionRemoteDataSource>()),
   );
   getIt.registerSingleton<CreateTransaction>(
     CreateTransaction(getIt<TransactionRepository>()),
   );
-  getIt.registerSingleton<TransactionProvider>(
-    TransactionProvider(createTransaction: getIt<CreateTransaction>()),
+  getIt.registerSingleton<GetUserTransactions>(
+    GetUserTransactions(getIt<TransactionRepository>()),
+  );
+  getIt.registerFactory<TransactionProvider>(
+    () => TransactionProvider(
+      createTransaction: getIt<CreateTransaction>(),
+      getUserTransactions: getIt<GetUserTransactions>(),
+    ),
   );
 }
