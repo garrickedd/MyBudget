@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:mybudget/core/utils/failure.dart';
 import 'package:mybudget/features/auth/domain/entities/user.dart';
 import 'package:mybudget/features/auth/domain/usecases/login.dart';
@@ -90,6 +91,26 @@ class AuthProvider extends ChangeNotifier {
       debugPrint('AuthProvider: Fetch user successful, user: $_user');
     } catch (e) {
       debugPrint('AuthProvider: Fetch user error: $e');
+      _errorMessage = e is Failure ? e.message : 'Failed to fetch user: $e';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> logoutUser(BuildContext context) async {
+    try {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+      debugPrint('AuthProvider: Logging out user');
+
+      _user = null;
+      _errorMessage = null;
+      debugPrint('AuthProvider: Logout successful');
+      Navigator.pushReplacementNamed(context, '/login');
+    } catch (e) {
+      debugPrint('AuthProvider: Logout error: $e');
       _errorMessage = e is Failure ? e.message : 'An error occurred';
     } finally {
       _isLoading = false;
@@ -98,12 +119,6 @@ class AuthProvider extends ChangeNotifier {
   }
 
   void clearError() {
-    _errorMessage = null;
-    notifyListeners();
-  }
-
-  void logout() {
-    _user = null;
     _errorMessage = null;
     notifyListeners();
   }

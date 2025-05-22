@@ -16,7 +16,10 @@ class AuthRepositoryImpl implements AuthRepository {
         'email': email,
         'password': password,
       }, includeToken: false);
-      return UserModel.fromJson(response['user']).toEntity();
+      if (response == null) {
+        throw Failure(message: 'Login failed: No response from server');
+      }
+      return UserModel.fromJson(response).toEntity();
     } catch (e) {
       throw Failure(message: e.toString());
     }
@@ -30,7 +33,10 @@ class AuthRepositoryImpl implements AuthRepository {
         'email': email,
         'password': password,
       }, includeToken: false);
-      return UserModel.fromJson(response['user']).toEntity();
+      if (response == null) {
+        throw Failure(message: 'Registration failed: No response from server');
+      }
+      return UserModel.fromJson(response).toEntity();
     } catch (e) {
       throw Failure(message: e.toString());
     }
@@ -40,9 +46,14 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<User> getUser(String id) async {
     try {
       final response = await apiClient.get('/users/$id');
-      return UserModel.fromJson(response['user']).toEntity();
+      if (response == null) {
+        throw Failure(message: 'User data not found for id: $id');
+      }
+      return UserModel.fromJson(response).toEntity();
     } catch (e) {
-      throw Failure(message: e.toString());
+      throw Failure(
+        message: e is Failure ? e.message : 'Failed to fetch user: $e',
+      );
     }
   }
 }
