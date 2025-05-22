@@ -29,14 +29,20 @@ class HomeScreen extends StatelessWidget {
         inactiveForegroundColor: Colors.grey,
       ),
     ),
-    PersistentTabConfig(
-      screen: const AddTransactionTab(),
+    PersistentTabConfig.noScreen(
+      // screen: const AddTransactionTab(),
       item: ItemConfig(
         icon: const Icon(Icons.add, size: 30),
         // title: "",
         activeForegroundColor: Colors.blue,
         inactiveForegroundColor: Colors.grey,
       ),
+      onPressed: (context) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const AddTransactionTab()),
+        );
+      },
     ),
     // PersistentTabConfig(
     //   screen: const SettingsTab(),

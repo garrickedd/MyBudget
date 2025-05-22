@@ -74,7 +74,7 @@ class ApiClient {
 
   dynamic _handleResponse(http.Response response) {
     final decoded = jsonDecode(response.body);
-    if (response.statusCode == 200) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
       // Kiểm tra xem decoded là List hay Map
       if (decoded is List) {
         return decoded;

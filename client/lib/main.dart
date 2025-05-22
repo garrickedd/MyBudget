@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mybudget/features/home/presentation/providers/home_provider.dart';
+import 'package:mybudget/features/transactions/presentation/providers/transaction_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mybudget/features/auth/presentation/providers/auth_provider.dart';
@@ -27,6 +28,7 @@ class MyBudgetApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => di.getIt<OnboardingProvider>()),
         ChangeNotifierProvider(create: (_) => di.getIt<JarsProvider>()),
         ChangeNotifierProvider(create: (_) => di.getIt<HomeProvider>()),
+        ChangeNotifierProvider(create: (_) => di.getIt<TransactionProvider>()),
       ],
       child: const AppInitializer(),
     );

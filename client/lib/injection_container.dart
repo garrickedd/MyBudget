@@ -23,5 +23,10 @@ import 'package:mybudget/features/onboarding/domain/repositories/onboarding_repo
 import 'package:mybudget/features/onboarding/domain/usecases/check_onboarding_status.dart';
 import 'package:mybudget/features/onboarding/domain/usecases/complete_onboarding.dart';
 import 'package:mybudget/features/onboarding/presentation/providers/onboarding_provider.dart';
+import 'package:mybudget/features/transactions/data/datasources/transaction_remote_datasource.dart';
+import 'package:mybudget/features/transactions/data/repositories/transaction_repository_impl.dart';
+import 'package:mybudget/features/transactions/domain/repositories/transaction_repository.dart';
+import 'package:mybudget/features/transactions/domain/usecases/create_transaction.dart';
+import 'package:mybudget/features/transactions/presentation/providers/transaction_provider.dart';
 
 part 'injection_container.main.dart';

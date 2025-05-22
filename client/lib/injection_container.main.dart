@@ -77,4 +77,18 @@ Future<void> initDependencies() async {
   getIt.registerSingleton<HomeProvider>(
     HomeProvider(getFinancialSummary: getIt<GetFinancialSummary>()),
   );
+
+  // Transactions feature
+  getIt.registerLazySingleton<TransactionRemoteDataSource>(
+    () => TransactionRemoteDataSource(getIt<ApiClient>()),
+  );
+  getIt.registerLazySingleton<TransactionRepository>(
+    () => TransactionRepositoryImpl(getIt<TransactionRemoteDataSource>()),
+  );
+  getIt.registerSingleton<CreateTransaction>(
+    CreateTransaction(getIt<TransactionRepository>()),
+  );
+  getIt.registerSingleton<TransactionProvider>(
+    TransactionProvider(createTransaction: getIt<CreateTransaction>()),
+  );
 }
