@@ -1,34 +1,80 @@
 import 'package:flutter/material.dart';
 import 'package:introduction_screen/introduction_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/foundation.dart'; // Để sử dụng debugPrint
 import 'package:mybudget/features/auth/presentation/screens/login_screen.dart';
 import 'package:mybudget/features/onboarding/presentation/providers/onboarding_provider.dart';
 
-class OnboardingScreen extends StatelessWidget {
+class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  _OnboardingScreenState createState() => _OnboardingScreenState();
+}
+
+class _OnboardingScreenState extends State<OnboardingScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Load data immediately
     final provider = Provider.of<OnboardingProvider>(context, listen: false);
+    provider.loadOnboardingData();
+  }
 
-    // Load onboarding data when screen is built
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      provider.loadOnboardingData();
-    });
-
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Consumer<OnboardingProvider>(
         builder: (context, provider, _) {
-          if (provider.pages.isEmpty) {
+          if (provider.isLoading) {
+            debugPrint('OnboardingScreen: Showing loading indicator');
             return const Center(child: CircularProgressIndicator());
           }
+          if (provider.errorMessage != null) {
+            debugPrint('OnboardingScreen: Error: ${provider.errorMessage}');
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(provider.errorMessage!),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      provider.loadOnboardingData();
+                    },
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
+          }
+          if (provider.pages.isEmpty) {
+            debugPrint('OnboardingScreen: Pages are empty');
+            return const Center(child: Text('No onboarding data available'));
+          }
+          debugPrint(
+            'OnboardingScreen: Displaying ${provider.pages.length} pages',
+          );
           return IntroductionScreen(
             pages:
                 provider.pages.map((page) {
                   return PageViewModel(
                     title: page.title,
                     body: page.description,
-                    image: Image.asset(page.image, height: 300),
+                    image: Image.asset(
+                      page.image,
+                      height: 300,
+                      errorBuilder: (context, error, stackTrace) {
+                        debugPrint(
+                          'OnboardingScreen: Error loading image ${page.image}: $error',
+                        );
+                        return const Icon(
+                          Icons.error,
+                          size: 100,
+                          color: Colors.red,
+                        );
+                      },
+                    ),
                     decoration: const PageDecoration(
                       titleTextStyle: TextStyle(
                         fontSize: 28,
@@ -40,6 +86,7 @@ class OnboardingScreen extends StatelessWidget {
                 }).toList(),
             onDone: () async {
               await provider.complete();
+              debugPrint('OnboardingScreen: Navigating to LoginScreen');
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const LoginScreen()),

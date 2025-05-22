@@ -1,74 +1,96 @@
 import 'package:flutter/material.dart';
+import 'package:mybudget/features/auth/domain/usecases/get_user.dart';
+import 'package:mybudget/features/auth/domain/usecases/login.dart';
+import 'package:mybudget/features/auth/domain/usecases/register.dart';
+import 'package:mybudget/features/onboarding/domain/repositories/onboarding_repository.dart';
+import 'package:mybudget/features/onboarding/domain/usecases/check_onboarding_status.dart';
+import 'package:mybudget/features/onboarding/domain/usecases/complete_onboarding.dart';
+import 'package:mybudget/injection_container.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:mybudget/injection_container.dart' as di;
+import 'package:get_it/get_it.dart';
+import 'package:flutter/foundation.dart'; // Để sử dụng debugPrint
+import 'package:mybudget/features/auth/presentation/providers/auth_provider.dart';
+import 'package:mybudget/features/auth/presentation/screens/login_screen.dart';
 import 'package:mybudget/features/onboarding/presentation/providers/onboarding_provider.dart';
 import 'package:mybudget/features/onboarding/presentation/screens/onboarding_screen.dart';
-// import 'package:mybudget/features/auth/presentation/providers/auth_provider.dart';
-// import 'package:mybudget/features/auth/presentation/screens/auth_check_screen.dart';
-// import 'package:mybudget/features/auth/presentation/screens/login_screen.dart';
-// import 'package:mybudget/features/auth/presentation/screens/register_screen.dart';
-// import 'package:mybudget/features/dashboard/presentation/screens/dashboard_screen.dart';
 
-Future<void> main() async {
-  await dotenv.load(fileName: ".env");
-  WidgetsFlutterBinding.ensureInitialized();
-  await di.init();
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return MultiProvider(
+void main() {
+  initDependencies(); // Initialize dependencies from injection_container
+  runApp(
+    MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => di.sl<OnboardingProvider>()),
-        // ChangeNotifierProvider(create: (_) => di.sl<AuthProvider>()),
-        // Thêm các provider khác tại đây
-      ],
-      child: MaterialApp(
-        title: 'MyBudget',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-          scaffoldBackgroundColor: Colors.white,
-          appBarTheme: const AppBarTheme(elevation: 0, centerTitle: true),
+        ChangeNotifierProvider(
+          create:
+              (_) => AuthProvider(
+                register: getIt<Register>(),
+                login: getIt<Login>(),
+                getUser: getIt<GetUser>(),
+              ),
         ),
-        home: const InitialScreen(),
-        // routes: {
-        //   '/login': (context) => const LoginScreen(),
-        //   '/register': (context) => const RegisterScreen(),
-        //   '/dashboard': (context) => const DashboardScreen(),
-        // },
-      ),
-    );
-  }
+        ChangeNotifierProvider(
+          create:
+              (_) => OnboardingProvider(
+                checkOnboardingStatus: getIt<CheckOnboardingStatus>(),
+                completeOnboarding: getIt<CompleteOnboarding>(),
+                repository: getIt<OnboardingRepository>(),
+              ),
+        ),
+      ],
+      child: const MyBudgetApp(),
+    ),
+  );
 }
 
-class InitialScreen extends StatelessWidget {
-  const InitialScreen({Key? key}) : super(key: key);
+class MyBudgetApp extends StatefulWidget {
+  const MyBudgetApp({super.key});
+
+  @override
+  _MyBudgetAppState createState() => _MyBudgetAppState();
+}
+
+class _MyBudgetAppState extends State<MyBudgetApp> {
+  late Future<bool> _checkStatusFuture;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Đảm bảo context đã có provider trước khi khởi tạo future
+    final provider = Provider.of<OnboardingProvider>(context, listen: false);
+    _checkStatusFuture = provider.checkStatus().timeout(
+      const Duration(seconds: 5),
+      onTimeout: () {
+        debugPrint(
+          'MyBudgetApp: Timeout checking onboarding status, defaulting to false',
+        );
+        return false;
+      },
+    );
+    debugPrint('MyBudgetApp: Initialized checkStatus future');
+  }
 
   @override
   Widget build(BuildContext context) {
-    final onboardingProvider = Provider.of<OnboardingProvider>(
-      context,
-      listen: false,
-    );
-
-    return FutureBuilder<bool>(
-      future: onboardingProvider.repository.isFirstLaunch(),
-      builder: (context, snapshot) {
-        return OnboardingScreen();
-        // if (snapshot.connectionState == ConnectionState.done) {
-        //   return snapshot.data == true
-        //       ? const OnboardingScreen()
-        //       : const AuthCheckScreen();
-        // }
-        // return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      },
+    return MaterialApp(
+      title: 'MyBudget',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: FutureBuilder<bool>(
+        future: _checkStatusFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            debugPrint('Main: Waiting for onboarding status');
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            debugPrint(
+              'Main: Error checking onboarding status: ${snapshot.error}',
+            );
+            return const Center(child: Text('Error loading onboarding status'));
+          }
+          final isFirstLaunch = snapshot.data ?? false;
+          debugPrint('Main: isFirstLaunch = $isFirstLaunch');
+          return isFirstLaunch ? const OnboardingScreen() : const LoginScreen();
+        },
+      ),
     );
   }
 }
