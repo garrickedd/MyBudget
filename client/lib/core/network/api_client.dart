@@ -7,7 +7,7 @@ import '../utils/failure.dart';
 class ApiClient {
   final http.Client _client = http.Client();
 
-  Future<Map<String, dynamic>> get(String endpoint) async {
+  Future<dynamic> get(String endpoint) async {
     try {
       final response = await _client
           .get(Uri.parse('${AppConstants.baseUrl}$endpoint'))
@@ -47,9 +47,41 @@ class ApiClient {
     }
   }
 
-  Map<String, dynamic> _handleResponse(http.Response response) {
+  Future<Map<String, dynamic>> put(
+    String endpoint,
+    Map<String, dynamic> data, {
+    bool includeToken = true,
+  }) async {
+    try {
+      debugPrint('ApiClient: Sending PUT to $endpoint with data: $data');
+      final response = await _client
+          .put(
+            Uri.parse('${AppConstants.baseUrl}$endpoint'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(data),
+          )
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () => throw Failure(message: 'Request timed out'),
+          );
+      debugPrint('ApiClient: Response from $endpoint: ${response.body}');
+      return _handleResponse(response);
+    } catch (e) {
+      debugPrint('ApiClient: Error on PUT $endpoint: $e');
+      throw Failure(message: e.toString());
+    }
+  }
+
+  dynamic _handleResponse(http.Response response) {
+    final decoded = jsonDecode(response.body);
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      // Kiểm tra xem decoded là List hay Map
+      if (decoded is List) {
+        return decoded;
+      } else if (decoded is Map) {
+        return decoded;
+      }
+      throw Failure(message: 'Unexpected response format');
     } else {
       throw Failure(
         message: 'Server error: ${response.statusCode} - ${response.body}',
