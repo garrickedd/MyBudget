@@ -1,7 +1,7 @@
-import 'package:mybudget/features/onboarding/data/models/onboarding_model.dart';
+import 'package:mybudget/features/onboarding/domain/entities/onboarding_page.dart';
 
 abstract class OnboardingRepository {
+  Future<List<OnboardingPage>> getOnboardingData();
   Future<bool> isFirstLaunch();
   Future<void> completeOnboarding();
-  List<OnboardingModel> getOnboardingData();
 }

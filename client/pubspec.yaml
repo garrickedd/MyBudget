@@ -8,9 +8,11 @@ environment:
 
 dependencies:
   dartz: ^0.10.1
+  equatable: ^2.0.7
   flutter:
     sdk: flutter
   flutter_dotenv: ^5.2.1
+  flutter_login: ^5.0.0
   foundation: ^0.0.5
   get_it: ^8.0.3
   http: ^1.4.0
