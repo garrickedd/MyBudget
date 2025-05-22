@@ -8,14 +8,15 @@ import 'package:mybudget/features/onboarding/domain/usecases/complete_onboarding
 import 'package:mybudget/injection_container.dart';
 import 'package:provider/provider.dart';
 import 'package:get_it/get_it.dart';
-import 'package:flutter/foundation.dart'; // Để sử dụng debugPrint
+import 'package:flutter/foundation.dart';
 import 'package:mybudget/features/auth/presentation/providers/auth_provider.dart';
 import 'package:mybudget/features/auth/presentation/screens/login_screen.dart';
 import 'package:mybudget/features/onboarding/presentation/providers/onboarding_provider.dart';
 import 'package:mybudget/features/onboarding/presentation/screens/onboarding_screen.dart';
+import 'package:mybudget/features/home/presentation/screens/home_screen.dart';
 
 void main() {
-  initDependencies(); // Initialize dependencies from injection_container
+  initDependencies();
   runApp(
     MultiProvider(
       providers: [
@@ -54,7 +55,6 @@ class _MyBudgetAppState extends State<MyBudgetApp> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Đảm bảo context đã có provider trước khi khởi tạo future
     final provider = Provider.of<OnboardingProvider>(context, listen: false);
     _checkStatusFuture = provider.checkStatus().timeout(
       const Duration(seconds: 5),
@@ -73,24 +73,34 @@ class _MyBudgetAppState extends State<MyBudgetApp> {
     return MaterialApp(
       title: 'MyBudget',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: FutureBuilder<bool>(
-        future: _checkStatusFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            debugPrint('Main: Waiting for onboarding status');
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            debugPrint(
-              'Main: Error checking onboarding status: ${snapshot.error}',
-            );
-            return const Center(child: Text('Error loading onboarding status'));
-          }
-          final isFirstLaunch = snapshot.data ?? false;
-          debugPrint('Main: isFirstLaunch = $isFirstLaunch');
-          return isFirstLaunch ? const OnboardingScreen() : const LoginScreen();
-        },
-      ),
+      initialRoute: '/',
+      routes: {
+        '/':
+            (context) => FutureBuilder<bool>(
+              future: _checkStatusFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  debugPrint('Main: Waiting for onboarding status');
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  debugPrint(
+                    'Main: Error checking onboarding status: ${snapshot.error}',
+                  );
+                  return const Center(
+                    child: Text('Error loading onboarding status'),
+                  );
+                }
+                final isFirstLaunch = snapshot.data ?? false;
+                debugPrint('Main: isFirstLaunch = $isFirstLaunch');
+                return isFirstLaunch
+                    ? const OnboardingScreen()
+                    : const LoginScreen();
+              },
+            ),
+        '/home': (context) => const HomeScreen(),
+        '/login': (context) => const LoginScreen(),
+      },
     );
   }
 }
