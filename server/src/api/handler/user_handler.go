@@ -1,45 +1,52 @@
 package handler
 
 import (
-	"net/http"
-
 	"mybudget/application/usecase"
-	"mybudget/domain/model"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 type UserHandler struct {
-	userUsecase usecase.UserUsecaseIF
+	userUsecase usecase.UserUsecase
 }
 
-func NewUserHandler(u usecase.UserUsecaseIF) *UserHandler {
-	return &UserHandler{userUsecase: u}
+func NewUserHandler(userUsecase usecase.UserUsecase) *UserHandler {
+	return &UserHandler{userUsecase: userUsecase}
+}
+
+type RegisterRequest struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+	Pass      string `json:"pass"`
 }
 
 func (h *UserHandler) Register(c *gin.Context) {
-	var user model.User
-	if err := c.ShouldBindJSON(&user); err != nil {
+	var req RegisterRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
-	if err := h.userUsecase.Register(&user); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+
+	user, err := h.userUsecase.Register(req.FirstName, req.LastName, req.Email, req.Pass)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{"message": "User registered"})
+	c.JSON(http.StatusCreated, user)
 }
 
 func (h *UserHandler) Login(c *gin.Context) {
 	var input struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+		Email string `json:"email"`
+		Pass  string `json:"pass"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid login input"})
 		return
 	}
-	user, err := h.userUsecase.Login(input.Email, input.Password)
+	user, err := h.userUsecase.Login(input.Email, input.Pass)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
@@ -48,10 +55,10 @@ func (h *UserHandler) Login(c *gin.Context) {
 }
 
 func (h *UserHandler) GetByID(c *gin.Context) {
-	id := c.Param("id")
-	user, err := h.userUsecase.GetByID(id)
+	idStr := c.Param("id")
+	user, err := h.userUsecase.GetByID(idStr)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, user)

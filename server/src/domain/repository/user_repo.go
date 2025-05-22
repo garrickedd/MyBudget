@@ -1,11 +1,14 @@
 package repository
 
-import "mybudget/domain/model"
+import (
+	"mybudget/domain/model"
 
-type UserRepoIF interface {
-	CreateUser(user *model.User) error
-	Update(user *model.User) error
-	Delete(id string) error
-	GetByEmail(email string) (*model.User, error)
-	ExistsByEmail(email string) (bool, error)
+	"github.com/google/uuid"
+)
+
+type UserRepository interface {
+	Create(user *model.User) error
+	FindByEmail(email string) (*model.User, error)
+	FindByID(id uuid.UUID) (*model.User, error)
+	CreateDefaultJars(userID uuid.UUID) error
 }
