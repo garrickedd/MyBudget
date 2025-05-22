@@ -1,8 +1,7 @@
-// abstract interface to get content onboarding
-import 'package:dartz/dartz.dart';
-import 'package:my_budget/core/error/failures.dart';
-import 'package:my_budget/features/onboarding/domain/entities/onboarding_entitiy.dart';
+import 'package:mybudget/features/onboarding/data/models/onboarding_model.dart';
 
 abstract class OnboardingRepository {
-  Future<Either<Failure, List<OnboardingEntitiy>>> getOnboardingContent();
+  Future<bool> isFirstLaunch();
+  Future<void> completeOnboarding();
+  List<OnboardingModel> getOnboardingData();
 }

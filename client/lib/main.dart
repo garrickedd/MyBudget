@@ -1,99 +1,74 @@
 import 'package:flutter/material.dart';
-import 'package:my_budget/features/auth/presentation/view/login_page.dart';
-import 'package:my_budget/features/auth/presentation/view/register_page.dart';
-import 'package:my_budget/features/onboarding/presentation/view/onboarding_page.dart';
-// import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:mybudget/injection_container.dart' as di;
+import 'package:mybudget/features/onboarding/presentation/providers/onboarding_provider.dart';
+import 'package:mybudget/features/onboarding/presentation/screens/onboarding_screen.dart';
+// import 'package:mybudget/features/auth/presentation/providers/auth_provider.dart';
+// import 'package:mybudget/features/auth/presentation/screens/auth_check_screen.dart';
+// import 'package:mybudget/features/auth/presentation/screens/login_screen.dart';
+// import 'package:mybudget/features/auth/presentation/screens/register_screen.dart';
+// import 'package:mybudget/features/dashboard/presentation/screens/dashboard_screen.dart';
 
-import 'core/services/auth_service.dart';
-import 'injection_container.dart' as di;
-
-void main() async {
+Future<void> main() async {
+  await dotenv.load(fileName: ".env");
   WidgetsFlutterBinding.ensureInitialized();
   await di.init();
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'MyBudget',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: Colors.white,
-        textTheme: const TextTheme(
-          headlineMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-          bodyMedium: TextStyle(fontSize: 16),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => di.sl<OnboardingProvider>()),
+        // ChangeNotifierProvider(create: (_) => di.sl<AuthProvider>()),
+        // Thêm các provider khác tại đây
+      ],
+      child: MaterialApp(
+        title: 'MyBudget',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+          scaffoldBackgroundColor: Colors.white,
+          appBarTheme: const AppBarTheme(elevation: 0, centerTitle: true),
         ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        ),
+        home: const InitialScreen(),
+        // routes: {
+        //   '/login': (context) => const LoginScreen(),
+        //   '/register': (context) => const RegisterScreen(),
+        //   '/dashboard': (context) => const DashboardScreen(),
+        // },
       ),
-      home: FutureBuilder(
-        future: _determineInitialRoute(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          return snapshot.data as Widget;
-        },
-      ),
-      routes: {
-        '/onboarding': (context) => const OnboardingPage(),
-        '/login': (context) => const LoginPage(),
-        '/register': (context) => const RegisterPage(),
-        '/home': (context) => const HomePage(),
-      },
     );
-  }
-
-  Future<Widget> _determineInitialRoute() async {
-    final authService = di.sl<AuthService>();
-    final isOnboardingCompleted = await authService.isOnboardingCompleted();
-    final token = await authService.getToken();
-
-    if (!isOnboardingCompleted) {
-      return const OnboardingPage();
-    } else if (token == null) {
-      return const LoginPage();
-    } else {
-      return const HomePage();
-    }
   }
 }
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class InitialScreen extends StatelessWidget {
+  const InitialScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Home')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'Welcome to MyBudget!',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () async {
-                await di.sl<AuthService>().clearToken();
-                Navigator.pushReplacementNamed(context, '/login');
-              },
-              child: const Text('Sign Out'),
-            ),
-          ],
-        ),
-      ),
+    final onboardingProvider = Provider.of<OnboardingProvider>(
+      context,
+      listen: false,
+    );
+
+    return FutureBuilder<bool>(
+      future: onboardingProvider.repository.isFirstLaunch(),
+      builder: (context, snapshot) {
+        return OnboardingScreen();
+        // if (snapshot.connectionState == ConnectionState.done) {
+        //   return snapshot.data == true
+        //       ? const OnboardingScreen()
+        //       : const AuthCheckScreen();
+        // }
+        // return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      },
     );
   }
 }

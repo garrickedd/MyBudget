@@ -1,6 +1,6 @@
 {
-    "name": "my_budget",
-    "short_name": "my_budget",
+    "name": "mybudget",
+    "short_name": "mybudget",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
