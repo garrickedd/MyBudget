@@ -20,7 +20,7 @@ class _HomeTabState extends State<HomeTab> {
       final homeProvider = Provider.of<HomeProvider>(context, listen: false);
       final jarsProvider = Provider.of<JarsProvider>(context, listen: false);
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final userId = authProvider.user?.id.toString();
+      final userId = authProvider.user?.id;
       if (userId != null) {
         homeProvider.fetchFinancials(userId);
         jarsProvider.fetchJars(userId);
@@ -57,196 +57,213 @@ class _HomeTabState extends State<HomeTab> {
             child:
                 homeProvider.isLoading || jarsProvider.isLoading
                     ? const Center(child: CircularProgressIndicator())
-                    : homeProvider.errorMessage != null ||
-                        jarsProvider.errorMessage != null
-                    ? Center(
-                      child: Text(
-                        homeProvider.errorMessage ??
-                            jarsProvider.errorMessage ??
-                            'Error loading data',
-                      ),
-                    )
+                    : homeProvider.errorMessage != null
+                    ? Center(child: Text(homeProvider.errorMessage!))
                     : RefreshIndicator(
                       onRefresh: () async {
-                        final userId = authProvider.user?.id.toString();
+                        final userId = authProvider.user?.id;
                         if (userId != null) {
                           await homeProvider.fetchFinancials(userId);
                           await jarsProvider.fetchJars(userId);
                         }
                       },
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(16.0),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.2),
-                                  spreadRadius: 2,
-                                  blurRadius: 5,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Total Balance',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.grey,
-                                      ),
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight:
+                                MediaQuery.of(context).size.height -
+                                kToolbarHeight -
+                                32.0, // Trừ chiều cao AppBar và padding
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(16.0),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.2),
+                                      spreadRadius: 2,
+                                      blurRadius: 5,
+                                      offset: const Offset(0, 3),
                                     ),
-                                    Text(
-                                      '₫${homeProvider.financialSummary.totalBalance.toStringAsFixed(1)}',
-                                      style: const TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Total Balance',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                        Text(
+                                          '₫${homeProvider.financialSummary.totalBalance.toStringAsFixed(1)}',
+                                          style: const TextStyle(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(
+                                      width: 60,
+                                      height: 60,
+                                      child: CircularProgressIndicator(
+                                        value:
+                                            homeProvider
+                                                        .financialSummary
+                                                        .income >
+                                                    0
+                                                ? homeProvider
+                                                        .financialSummary
+                                                        .totalBalance /
+                                                    homeProvider
+                                                        .financialSummary
+                                                        .income
+                                                : 0.0,
+                                        backgroundColor: Colors.grey[300],
+                                        color: Colors.teal,
+                                        strokeWidth: 6,
                                       ),
                                     ),
                                   ],
                                 ),
-                                SizedBox(
-                                  width: 60,
-                                  height: 60,
-                                  child: CircularProgressIndicator(
-                                    value:
-                                        homeProvider.financialSummary.income > 0
-                                            ? homeProvider
-                                                    .financialSummary
-                                                    .totalBalance /
-                                                homeProvider
-                                                    .financialSummary
-                                                    .income
-                                            : 0.0,
-                                    backgroundColor: Colors.grey[300],
-                                    color: Colors.teal,
-                                    strokeWidth: 6,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text(
-                                    'Income',
-                                    style: TextStyle(color: Colors.teal),
+                                  Column(
+                                    children: [
+                                      const Text(
+                                        'Income',
+                                        style: TextStyle(color: Colors.teal),
+                                      ),
+                                      Text(
+                                        '₫${homeProvider.financialSummary.income.toStringAsFixed(1)}',
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.teal,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  Text(
-                                    '₫${homeProvider.financialSummary.income.toStringAsFixed(1)}',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.teal,
-                                    ),
+                                  Column(
+                                    children: [
+                                      const Text(
+                                        'Expense',
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                      Text(
+                                        '₫${homeProvider.financialSummary.expense.toStringAsFixed(1)}',
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                              Column(
-                                children: [
-                                  const Text(
-                                    'Expense',
-                                    style: TextStyle(color: Colors.red),
-                                  ),
-                                  Text(
-                                    '₫${homeProvider.financialSummary.expense.toStringAsFixed(1)}',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.red,
-                                    ),
-                                  ),
-                                ],
+                              const SizedBox(height: 16),
+                              Expanded(
+                                child:
+                                    jarsProvider.jars.isEmpty
+                                        ? const Center(
+                                          child: Text('No jars available'),
+                                        )
+                                        : ListView.builder(
+                                          shrinkWrap:
+                                              true, // Thêm shrinkWrap để ListView tự điều chỉnh kích thước
+                                          physics:
+                                              const NeverScrollableScrollPhysics(), // Tắt scroll riêng của ListView
+                                          itemCount: jarsProvider.jars.length,
+                                          itemBuilder: (context, index) {
+                                            final jar =
+                                                jarsProvider.jars[index];
+                                            final amount = (homeProvider
+                                                        .financialSummary
+                                                        .income *
+                                                    jar.percentage /
+                                                    100)
+                                                .toStringAsFixed(1);
+                                            return Card(
+                                              margin:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 8.0,
+                                                  ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              color: Colors.white.withOpacity(
+                                                0.9,
+                                              ),
+                                              child: ListTile(
+                                                leading: Image.asset(
+                                                  'assets/icons/jar_icon.png',
+                                                  height: 40,
+                                                  width: 40,
+                                                  errorBuilder: (
+                                                    context,
+                                                    error,
+                                                    stackTrace,
+                                                  ) {
+                                                    print(
+                                                      'Error loading jar_icon.png: $error',
+                                                    );
+                                                    return const Icon(
+                                                      Icons.error,
+                                                      size: 40,
+                                                      color: Colors.red,
+                                                    );
+                                                  },
+                                                ),
+                                                title: Text(
+                                                  jar.name,
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    color: Colors.teal,
+                                                  ),
+                                                ),
+                                                subtitle: Text(
+                                                  '${(jar.percentage).toStringAsFixed(0)}% of your Income',
+                                                  style: TextStyle(
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                ),
+                                                trailing: Text(
+                                                  '₫$amount',
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.teal,
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
-                          Expanded(
-                            child:
-                                jarsProvider.jars.isEmpty
-                                    ? const Center(
-                                      child: Text('No jars available'),
-                                    )
-                                    : ListView.builder(
-                                      itemCount: jarsProvider.jars.length,
-                                      itemBuilder: (context, index) {
-                                        final jar = jarsProvider.jars[index];
-                                        final amount = (homeProvider
-                                                    .financialSummary
-                                                    .income *
-                                                jar.percentage /
-                                                100)
-                                            .toStringAsFixed(1);
-                                        return Card(
-                                          margin: const EdgeInsets.symmetric(
-                                            vertical: 8.0,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
-                                          ),
-                                          color: Colors.white.withOpacity(0.9),
-                                          child: ListTile(
-                                            leading: Image.asset(
-                                              'assets/icons/jar_icon.png',
-                                              height: 40,
-                                              width: 40,
-                                              errorBuilder: (
-                                                context,
-                                                error,
-                                                stackTrace,
-                                              ) {
-                                                print(
-                                                  'Error loading jar_icon.png: $error',
-                                                );
-                                                return const Icon(
-                                                  Icons.error,
-                                                  size: 40,
-                                                  color: Colors.red,
-                                                );
-                                              },
-                                            ),
-                                            title: Text(
-                                              jar.name,
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                color: Colors.teal,
-                                              ),
-                                            ),
-                                            subtitle: Text(
-                                              '${(jar.percentage).toStringAsFixed(0)}% of your Income',
-                                              style: TextStyle(
-                                                color: Colors.grey[600],
-                                              ),
-                                            ),
-                                            trailing: Text(
-                                              '₫$amount',
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.teal,
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
           ),

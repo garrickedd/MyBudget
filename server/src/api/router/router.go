@@ -19,18 +19,21 @@ func SetupRouter(db *sql.DB) *gin.Engine {
 	transactionRepo := persistence.NewTransactionRepository(db)
 	budgetRepo := persistence.NewBudgetRepository(db)
 	reportRepo := persistence.NewReportRepository(db)
+	financialRepo := persistence.NewFinancialRepository(db) // Thêm FinancialRepository
 	passwordService := service.NewBcryptService()
 	userUsecase := usecase.NewUserUsecase(userRepo, passwordService)
 	jarUsecase := usecase.NewJarUsecase(jarRepo)
 	transactionUsecase := usecase.NewTransactionUsecase(transactionRepo, jarRepo)
 	budgetUsecase := usecase.NewBudgetUsecase(budgetRepo, jarRepo)
 	reportUsecase := usecase.NewReportUsecase(reportRepo)
+	financialUsecase := usecase.NewFinancialUsecase(financialRepo) // Thêm FinancialUsecase
 
 	userHandler := handler.NewUserHandler(userUsecase)
 	jarHandler := handler.NewJarHandler(jarUsecase)
 	transactionHandler := handler.NewTransactionHandler(transactionUsecase)
 	budgetHandler := handler.NewBudgetHandler(budgetUsecase)
 	reportHandler := handler.NewReportHandler(reportUsecase)
+	financialHandler := handler.NewFinancialHandler(financialUsecase) // Thêm FinancialHandler
 
 	// Routes
 	api := router.Group("/api/v1")
@@ -40,6 +43,7 @@ func SetupRouter(db *sql.DB) *gin.Engine {
 		TransactionRoutes(api, transactionHandler)
 		BudgetRoutes(api, budgetHandler)
 		ReportRoutes(api, reportHandler)
+		FinancialRoutes(api, financialHandler) // Thêm FinancialRoutes
 	}
 
 	return router
